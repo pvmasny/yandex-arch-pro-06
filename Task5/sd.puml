@@ -1,0 +1,36 @@
+@startuml SD
+
+actor Operator as op
+
+participant "MES Frontend" as front
+participant "MES API" as api
+database "MES Сache" as cache
+database "MES DB" as db
+
+== Получение списка заказов в работе по статусам ==
+
+op -> front: Получение списка заказов в работе по статусам
+front -> api: GET /api/orders?status
+api -> cache: orders:status:page
+alt Данные в кеше есть
+    cache -> api: Возвращает данные из кеша
+    api -> front: Возвращает данные
+    front -> op: Получает список заказов в работе по статусам
+else Данных в кеше нет
+    api -> db: Выполняет запрос в БД
+    db -> api: Обрабатывает результата запроса
+    api -> cache: Сохраняет данные в кеше
+    api -> front: Возвращает данные
+    front -> op: Получает список заказов в работе по статусам
+end
+
+== Обновление статуса заказа ==
+
+op -> front: Изменяет статус заказа
+front -> api: PUT /api/orders/{order_id} {status}
+api -> db: обновление статуса заказа в БД
+api -> cache: обновляет данные закешированные данные по измененному заказу
+api -> front: Отправляет ответ по изменению статуса заказа
+front -> op: Статус заказа изменен
+
+@enduml
